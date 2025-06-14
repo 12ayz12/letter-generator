@@ -87,8 +87,8 @@ EXAMPLE_DOC = """
 감사합니다.
 """
 def build_prompt(user_input, examples):
-    example_text = "\n\n---\n\n".join(examples)
-    return f"""
+    example_text = "\n\n---\n\n".join(examples[:1])
+    prompt = f"""
 아래 예시의 공문 양식(포맷, 제목, 표기, 결재선 등 스타일)을 반드시 따라 새 공문을 작성하세요.
 [대표 예시]
 {EXAMPLE_DOC}
