@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-    <h1>GPT 기반 공문 생성기</h1>
+    <h1>교사 및 행정실용 공문 생성기</h1>
 
     <label for="keyword">키워드</label>
     <input type="text" id="keyword" placeholder="예: 안전, 환경, 행정">
@@ -23,7 +23,7 @@
     <label for="attachments">첨부파일</label>
     <input type="text" id="attachments" placeholder="예: 일정표, 참석자 명단">
 
-    <button onclick="generateDocument()">공문 생성</button>
+    <button onclick="generateDocument()">공문을 생성합니다.</button>
 
     <div id="result"></div>
 
@@ -32,6 +32,9 @@
             const keyword = document.getElementById('keyword').value;
             const event = document.getElementById('event').value;
             const attachments = document.getElementById('attachments').value;
+            const resultDiv = document.getElementById('result');
+
+            try{
 
             const response = await fetch('/generate', {
                 method: 'POST',
@@ -39,15 +42,24 @@
                 body: JSON.stringify({ keyword, event, attachments })
             });
 
-            const data = await response.json();
-            const resultDiv = document.getElementById('result');
+            const text = await response.text();
+
+                
+          try {
+            const data = JSON.parse(text);
 
             if (data.result) {
                 resultDiv.textContent = data.result;
             } else {
-                resultDiv.textContent = '오류: ' + (data.error || '알 수 없는 오류');
+                resultDiv.textContent = '❌ 오류: ' + (data.error || '알 수 없는 오류');
             }
+        } catch (parseErr) {
+            resultDiv.textContent = `⚠️ JSON 파싱 실패. 서버 응답: \n${text}`;
         }
+    } catch (err) {
+        resultDiv.textContent = '❌ 요청 실패: ' + err.message;
+    }
+}
     </script>
 </body>
 </html>
