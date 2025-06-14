@@ -6,8 +6,6 @@ app = Flask(__name__)
 
 # 1. 환경변수에서 API 키 가져오기
 openai.api_key = os.getenv("OPENAI_API_KEY")
-if not openai.api_key:
-    raise ValueError("OPENAI_API_KEY 환경변수가 설정되어 있지 않습니다.")
 
 # 2. 메인 페이지
 @app.route("/")
@@ -51,7 +49,3 @@ def generate_document():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-# 3. 로컬 실행용 (배포용에선 gunicorn 사용)
-if __name__ == "__main__":
-    app.run(debug=True)
