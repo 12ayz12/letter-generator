@@ -1,3 +1,6 @@
 flask
 openai==0.28
 gunicorn
+sentence-transformers
+faiss-cpu
+pdfminer.six
