@@ -9,14 +9,16 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 if not openai.api_key:
     raise ValueError("OPENAI_API_KEY 환경변수가 설정되어 있지 않습니다.")
 
-# 2. 공문 생성 API 엔드포인트
-@app.route("/generate", methods=["POST"])
+# 2. 메인 페이지
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
-
+    
+#3. 공문 생성 API
+@app.route("/generate", methods=["POST"])
 def generate_document():
     data = request.get_json()
+    print("요청 데이터:", data)
 
     keyword = data.get("keyword")
     event = data.get("event")
