@@ -58,49 +58,31 @@ def retrieve_similar_docs(model, query, top_k=3):
     D, I = index.search(query_vec, top_k)
     return [documents[i][1] for i in I[0] if i < len(documents)]
 
-EXAMPLE_DOC = """
-────────────────────────────
-제목: 2025학년도 학교교육력 제고 연구팀 중간 발표회 및 전시회 참관 안내
+EXAMPLE_PROMPT = """
+제목: 2025학년도 하계 교원 연수 안내
 
-1. 관련: 서울특별시교육청학생체육관 교육지원과-73(2025. 2. 5.)
-2. 2025학년도 학교교육력 제고 <청소년(수련) 활동> 연구팀의 연구 결과 중간 발표회 및 전시회를 다음과 같이 실시하고자 하오니, 귀교의 희망 교원이 참관할 수 있도록 안내 부탁드립니다.
-   가. 연구 주제: 
-   나. 중간발표회 및 전시회 개요
-     1) 일시: 2025. 6. 18.(수) 14:30~16:00
-     2) 장소: 본교 2층 과학실
-     3) 일정
-   다. 참관 신청 및 안내 사항
-     1) 2025. 6. 16.(월) 12:00까지 아래 링크를 통해 참관 신청
-        - 신청링크: https://forms.gle/
-     2) 신청교사는 참관 후 참관록 작성 협조
-   라. 비고: 
+수신: 각급 학교장
+발신: OO교육지원청 교육장
 
-붙임: 2025학년도 학교교육력 제고 연구팀 중간 발표회 및 전시회 포스터 1부. 끝.
+1. 2025학년도 하계 교원 연수 운영과 관련하여 다음과 같이 안내합니다.
 
-────────────────────────────
+주요 안내사항
+  가. 연수명: {event}
+  나. 연수 대상: {keyword}
+  다. 연수 기간: ○○
+  라. 연수 장소: ○○○
+  마. 신청 방법: 붙임 안내문 참고
+
+붙임: {attachments} 1부. 끝.
 """
-def build_prompt(user_input, examples):
-    example_text = "\n\n---\n\n".join(examples[:1])
-    prompt = f"""
-아래 예시의 아래 예시의 '목차(1., 2., 3., 가., 나., 다.), 구분선, 결재선, 붙임' 등 서식을 반드시 그대로 따라 새 공문을 작성하세요.
-※ 회사명, 사장, 부사장, 업체명, 담당자 등 **비(非)교육청/학교/공문 스타일**은 절대 사용하지 마세요.
-※ 오로지 학교 또는 교육청 공문 서식만 허용합니다.
-[대표 예시]
-{EXAMPLE_DOC}
 
-(참고용 예시)
-{example_text}
+def build_prompt(user_input):
+    return EXAMPLE_PROMPT.format(
+        event=user_input["event"],
+        keyword=user_input["keyword"],
+        attachments=user_input["attachments"]
+    )
 
-공문 스타일에 맞게 제목, 본문, 붙임, 결재선 등을 포함한 문서를 작성하세요.
-위 예시와 같은 형식으로 작성하세요:
-
-- 키워드: {user_input["keyword"]}
-- 행사명: {user_input["event"]}
-- 첨부파일: {user_input["attachments"]}
-
-공문 스타일에 맞게 제목, 본문, 붙임, 결재선 등을 포함한 문서를 작성하세요.
-"""
-    return prompt
     
 # 2. 메인 페이지
 @app.route("/")
