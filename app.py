@@ -58,29 +58,39 @@ def retrieve_similar_docs(model, query, top_k=3):
     D, I = index.search(query_vec, top_k)
     return [documents[i][1] for i in I[0] if i < len(documents)]
 
-EXAMPLE_PROMPT = """
-제목: {event}
+# 프롬프트 입력(실제 예시만 사용하도록)
+def build_prompt(user_input, examples):
+    # 실제 예시(교육청 공문)만 사용!
+    EXAMPLE_DOC = """────────────────────────────
+제목: 2025학년도 교원 연수 안내
 
-수신: 각급 학교장
-발신: OO교육지원청 교육장
+1. 관련: 서울특별시교육청-1234(2025.3.1.)
+2. 2025학년도 하계 교원 연수 운영과 관련하여 아래와 같이 연수를 실시하오니, 협조 부탁드립니다.
+  가. 연수명: 2025학년도 하계 교원 연수
+  나. 대상: 관내 초·중등 교원
+  다. 기간: 2025.7.20.~2025.7.22.
+  라. 장소: ○○연수원
+  마. 기타: 붙임 참조
 
-1. {event}와 관련하여 다음과 같이 안내합니다.
-
-주요 안내사항
-  가. 주요 키워드: {keyword}
-  나. 일정 및 장소: ○○○
-  다. 유의사항: 붙임 참조
-
-붙임: {attachments} 1부. 끝.
+붙임: 교원 연수 안내문 1부.  끝.
+────────────────────────────
 """
 
-def build_prompt(user_input):
-    return EXAMPLE_PROMPT.format(
-        event=user_input["event"],
-        keyword=user_input["keyword"],
-        attachments=user_input["attachments"]
-    )
+    prompt = f"""
+아래 공문 예시의 '번호(1., 2., 3.), 소항목(가., 나., 다.), 붙임, 끝' 형식과 구분선을 반드시 그대로 따라 새 공문을 작성하세요.  
+아래 예시와 같은 형식 외에는 절대 다른 형식(회사, 업체, 담당자, 자유 인사말 등)이나 표현을 사용하지 마세요.
 
+[공문 예시]
+{EXAMPLE_DOC}
+
+[입력 정보]
+- 행사명: {user_input["event"]}
+- 키워드: {user_input["keyword"]}
+- 첨부파일: {user_input["attachments"]}
+
+위 예시와 입력 정보를 바탕으로, 반드시 예시 형식의 공문을 작성하세요.
+"""
+    return prompt
     
 # 2. 메인 페이지
 @app.route("/")
