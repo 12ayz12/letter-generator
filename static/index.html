@@ -14,14 +14,32 @@
 <body>
     <h1>교사 및 행정실용 공문 생성기</h1>
 
-    <label for="keyword">키워드</label>
-    <input type="text" id="keyword" placeholder="예: 안전, 환경, 행정">
-
     <label for="event">행사명</label>
-    <input type="text" id="event" placeholder="예: 2025년 여름방학 프로그램">
+    <input type="text" id="event" placeholder="예: 2025학년도 하계 교원 연수 안내">
 
-    <label for="attachments">첨부파일</label>
-    <input type="text" id="attachments" placeholder="예: 일정표, 참석자 명단">
+    <label for="summary">요약/취지</label>
+    <textarea id="summary" rows="2" placeholder="예: 관내 교원의 역량 강화를 위해 하계 연수를 운영합니다."></textarea>
+
+    <label for="date">일시</label>
+    <input type="text" id="date" placeholder="예: 2025년 7월 20일 ~ 7월 22일">
+
+    <label for="time">시간</label>
+    <input type="text" id="time" placeholder="예: 09:00~18:00">
+
+    <label for="location">장소</label>
+    <input type="text" id="location" placeholder="예: 본교 2층 과학실">
+
+    <label for="target">대상</label>
+    <input type="text" id="target" placeholder="예: 관내 초·중등 교원">
+
+    <label for="application">신청 방법</label>
+    <input type="text" id="application" placeholder="예: 구글폼 또는 안내문 참고">
+
+    <label for="contact">문의처 (선택)</label>
+    <input type="text" id="contact" placeholder="예: 행정실(02-1234-5678)">
+
+    <label for="attachments">붙임파일명</label>
+    <input type="text" id="attachments" placeholder="예: 교원 연수 안내문 1부">
 
     <button onclick="generateDocument()">공문을 생성합니다.</button>
 
@@ -29,37 +47,41 @@
 
     <script>
         async function generateDocument() {
-            const keyword = document.getElementById('keyword').value;
             const event = document.getElementById('event').value;
+            const summary = document.getElementById('summary').value;
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const location = document.getElementById('location').value;
+            const target = document.getElementById('target').value;
+            const application = document.getElementById('application').value;
+            const contact = document.getElementById('contact').value;
             const attachments = document.getElementById('attachments').value;
             const resultDiv = document.getElementById('result');
 
-            try{
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event, summary, date, time, location, target, application, contact, attachments })
+                });
 
-            const response = await fetch('/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keyword, event, attachments })
-            });
+                const text = await response.text();
 
-            const text = await response.text();
+                try {
+                    const data = JSON.parse(text);
 
-                
-          try {
-            const data = JSON.parse(text);
-
-            if (data.result) {
-                resultDiv.textContent = data.result;
-            } else {
-                resultDiv.textContent = '❌ 오류: ' + (data.error || '알 수 없는 오류');
+                    if (data.result) {
+                        resultDiv.textContent = data.result;
+                    } else {
+                        resultDiv.textContent = '❌ 오류: ' + (data.error || '알 수 없는 오류');
+                    }
+                } catch (parseErr) {
+                    resultDiv.textContent = `⚠️ JSON 파싱 실패. 서버 응답: \n${text}`;
+                }
+            } catch (err) {
+                resultDiv.textContent = '❌ 요청 실패: ' + err.message;
             }
-        } catch (parseErr) {
-            resultDiv.textContent = `⚠️ JSON 파싱 실패. 서버 응답: \n${text}`;
         }
-    } catch (err) {
-        resultDiv.textContent = '❌ 요청 실패: ' + err.message;
-    }
-}
     </script>
 </body>
 </html>
