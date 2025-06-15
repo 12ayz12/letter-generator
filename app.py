@@ -110,11 +110,17 @@ def index():
 #3. 공문 생성 API
 @app.route("/generate", methods=["POST"])
 def generate():
+    try:
+        print("[DEBUG] /generate called")
+        
     data = request.get_json()
     keyword = data.get("keyword")
     event = data.get("event")
     attachments = data.get("attachments")
+    print(f"[DEBUG] 입력값: keyword={keyword}, event={event}, attachments={attachments}")
+
     if not all([keyword, event, attachments]):
+        print("[ERROR] 입력값 누락")
         return jsonify({"error": "모든 입력 필드(keyword, event, attachments)가 필요합니다."}), 400
 
     user_input = {"keyword": keyword, "event": event, "attachments": attachments}
@@ -122,20 +128,25 @@ def generate():
   
     # PDF 기반 유사 예시 추출
     examples = retrieve_similar_docs(sentence_model, query)
+    print(f"[DEBUG] 예시 개수: {len(examples)}")
+    
     prompt = build_prompt(user_input, examples)
+    print("[DEBUG] prompt 길이:", len(prompt))
+    print("[DEBUG] prompt 미리보기:\n", prompt[:300])
 
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
             max_tokens=1000
         )
         result = response["choices"][0]["message"]["content"]
+        print("[DEBUG] 생성 결과 미리보기:", result[:200])
         return jsonify({"result": result})
 
     except Exception as e:
+        print("[EXCEPTION]", e)
         return jsonify({"error": str(e)}), 500
 
