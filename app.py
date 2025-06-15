@@ -59,19 +59,17 @@ def retrieve_similar_docs(model, query, top_k=3):
     return [documents[i][1] for i in I[0] if i < len(documents)]
 
 EXAMPLE_PROMPT = """
-제목: 2025학년도 하계 교원 연수 안내
+제목: {event}
 
 수신: 각급 학교장
 발신: OO교육지원청 교육장
 
-1. 2025학년도 하계 교원 연수 운영과 관련하여 다음과 같이 안내합니다.
+1. {event}와 관련하여 다음과 같이 안내합니다.
 
 주요 안내사항
-  가. 연수명: {event}
-  나. 연수 대상: {keyword}
-  다. 연수 기간: ○○
-  라. 연수 장소: ○○○
-  마. 신청 방법: 붙임 안내문 참고
+  가. 주요 키워드: {keyword}
+  나. 일정 및 장소: ○○○
+  다. 유의사항: 붙임 참조
 
 붙임: {attachments} 1부. 끝.
 """
