@@ -43,7 +43,7 @@ def build_vector_db(model, documents):
         pickle.dump(documents, f)
     faiss.write_index(index, str(INDEX_FILE))
 
-def retrieve_similar_docs(model, query, top_k=3):
+def retrieve_similar_docs(model, query, top_k=1):
     if not INDEX_FILE.exists() or not DOC_EMBED_FILE.exists():
         # 인덱스가 없으면 생성
         documents = load_documents()
@@ -58,7 +58,7 @@ def retrieve_similar_docs(model, query, top_k=3):
     D, I = index.search(query_vec, top_k)
     return [documents[i][1] for i in I[0] if i < len(documents)]
 
-# 프롬프트 입력(실제 예시만 사용하도록)
+# 대표 공문 포맷 + RAG 예시(최대 1개, 400자 이내)
 EXAMPLE_PROMPT = """
 제목: {event}
 
@@ -75,79 +75,81 @@ EXAMPLE_PROMPT = """
   마. 문의처: {contact}
 
 붙임: {attachments} 1부. 끝.
-"""
-※ 아래 참고 예시 내용을 반드시 참고하여, 위와 동일한 서식(가. 나. 다.)으로 공문을 작성하세요.
+
 [참고 예시]
 {example}
+
+※ 참고 예시 내용을 반드시 반영하여, 위와 동일한 서식(가. 나. 다.)으로 공문을 작성하세요.
 """
 
 def build_prompt(user_input, examples):
-    # 예시 중 첫 1개만 아주 짧게 (길면 자르기)
-      EXAMPLE_DOC = """
-────────────────────────────
-제목: 2025학년도 교원 연수 안내
-
-1. 관련: ○○교육청-2025(2025.6.15.)
-2. 2025학년도 하계 교원 연수 운영과 관련하여 아래와 같이 연수를 실시하오니, 협조 부탁드립니다.
-   가. 연수명: 2025학년도 하계 연수
-   나. 대상: 관내 교원
-   다. 기간: 2025.7.20.~2025.7.22.
-   라. 장소: ○○연수원
-   마. 신청 방법: 붙임 참조
-
-붙임: 교원 연수 안내문 1부.  끝.
-────────────────────────────
-"""
+    # 예시 중 첫 1개만, 400자 이내로 잘라서 사용
     example_text = (examples[0][:400]) if examples else ""
     return EXAMPLE_PROMPT.format(
-        event=user_input["event"],
-        summary=user_input["summary"],
-        date=user_input["date"],
-        time=user_input["time"],
-        location=user_input["location"],
-        target=user_input["target"],
-        application=user_input["application"],
+        event=user_input.get("event", ""),
+        summary=user_input.get("summary", ""),
+        date=user_input.get("date", ""),
+        time=user_input.get("time", ""),
+        location=user_input.get("location", ""),
+        target=user_input.get("target", ""),
+        application=user_input.get("application", ""),
         contact=user_input.get("contact", ""),
-        attachments=user_input["attachments"],
+        attachments=user_input.get("attachments", ""),
         example=example_text
     )
 
-    
-# 2. 메인 페이지
+# 메인 페이지
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
-    
-#3. 공문 생성 API
+
+# 공문 생성 API
 @app.route("/generate", methods=["POST"])
 def generate():
     try:
         print("[DEBUG] /generate called")
-        
-    data = request.get_json()
-    keyword = data.get("keyword")
-    event = data.get("event")
-    attachments = data.get("attachments")
-    print(f"[DEBUG] 입력값: keyword={keyword}, event={event}, attachments={attachments}")
+        data = request.get_json()
+        # 입력값 세부 항목으로 분리(폼에서 받아야 함)
+        event = data.get("event", "")
+        summary = data.get("summary", "")
+        date = data.get("date", "")
+        time = data.get("time", "")
+        location = data.get("location", "")
+        target = data.get("target", "")
+        application = data.get("application", "")
+        contact = data.get("contact", "")
+        attachments = data.get("attachments", "")
 
-    if not all([keyword, event, attachments]):
-        print("[ERROR] 입력값 누락")
-        return jsonify({"error": "모든 입력 필드(keyword, event, attachments)가 필요합니다."}), 400
+        # 모든 항목 필수면 체크 (옵션화 가능)
+        if not all([event, summary, date, time, location, target, application, attachments]):
+            print("[ERROR] 입력값 누락")
+            return jsonify({"error": "모든 입력 필드를 입력해 주세요."}), 400
 
-    user_input = {"keyword": keyword, "event": event, "attachments": attachments}
-    query = f"{keyword} {event} {attachments}"
-  
-    # PDF 기반 유사 예시 추출
-    examples = retrieve_similar_docs(sentence_model, query)
-    print(f"[DEBUG] 예시 개수: {len(examples)}")
-    
-    prompt = build_prompt(user_input, examples)
-    print("[DEBUG] prompt 길이:", len(prompt))
-    print("[DEBUG] prompt 미리보기:\n", prompt[:300])
+        user_input = {
+            "event": event,
+            "summary": summary,
+            "date": date,
+            "time": time,
+            "location": location,
+            "target": target,
+            "application": application,
+            "contact": contact,
+            "attachments": attachments
+        }
+        # 검색 쿼리에는 대표 정보만 모아서
+        query = f"{event} {summary} {date} {location} {target} {application}"
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
+        # PDF 기반 유사 예시 추출
+        examples = retrieve_similar_docs(sentence_model, query)
+        print(f"[DEBUG] 예시 개수: {len(examples)}")
+
+        prompt = build_prompt(user_input, examples)
+        print("[DEBUG] prompt 길이:", len(prompt))
+        print("[DEBUG] prompt 미리보기:\n", prompt[:300])
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
                 {"role": "user", "content": prompt}
             ],
             temperature=0.7,
@@ -160,4 +162,5 @@ def generate():
     except Exception as e:
         print("[EXCEPTION]", e)
         return jsonify({"error": str(e)}), 500
+
 
