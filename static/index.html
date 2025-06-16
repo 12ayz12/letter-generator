@@ -2,50 +2,99 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>공문 생성기</title>
+    <title>공문 및 생활기록부 생성기</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
         label { display: block; margin-top: 10px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 8px; margin-top: 4px; }
+        input, textarea, select { width: 100%; padding: 8px; margin-top: 4px; }
         button { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
-        #result { white-space: pre-wrap; background: #f4f4f4; padding: 15px; border: 1px solid #ccc; margin-top: 20px; }
+        #result, #saenggiResult { white-space: pre-wrap; background: #f4f4f4; padding: 15px; border: 1px solid #ccc; margin-top: 20px; }
+        .tab-btn { padding: 10px 20px; font-size: 16px; margin-bottom: 20px; border-radius: 6px; border: 1px solid #888; background: #eee; cursor: pointer;}
+        .tab-btn.active { background: #fff; border-bottom: none; font-weight: bold;}
     </style>
 </head>
 <body>
-    <h1>교사 및 행정실용 공문 생성기</h1>
+    <!-- 탭 버튼 -->
+    <div>
+        <button class="tab-btn active" id="gongmunBtn" onclick="showTab('gongmun')">공문 생성</button>
+        <button class="tab-btn" id="saenggiBtn" onclick="showTab('saenggi')">생활기록부</button>
+    </div>
 
-    <label for="event">행사명</label>
-    <input type="text" id="event" placeholder="예: 2025학년도 하계 교원 연수 안내">
+    <!-- 공문 생성 폼 -->
+    <div id="gongmunTab">
+        <h1>교사 및 행정실용 공문 생성기</h1>
+        <label for="event">행사명</label>
+        <input type="text" id="event" placeholder="예: 2025학년도 하계 교원 연수 안내">
 
-    <label for="summary">요약/취지</label>
-    <textarea id="summary" rows="2" placeholder="예: 관내 교원의 역량 강화를 위해 하계 연수를 운영합니다."></textarea>
+        <label for="summary">요약/취지</label>
+        <textarea id="summary" rows="2" placeholder="예: 관내 교원의 역량 강화를 위해 하계 연수를 운영합니다."></textarea>
 
-    <label for="date">일시</label>
-    <input type="text" id="date" placeholder="예: 2025년 7월 20일 ~ 7월 22일">
+        <label for="date">일시</label>
+        <input type="text" id="date" placeholder="예: 2025년 7월 20일 ~ 7월 22일">
 
-    <label for="time">시간</label>
-    <input type="text" id="time" placeholder="예: 09:00~18:00">
+        <label for="time">시간</label>
+        <input type="text" id="time" placeholder="예: 09:00~18:00">
 
-    <label for="location">장소</label>
-    <input type="text" id="location" placeholder="예: 본교 2층 과학실">
+        <label for="location">장소</label>
+        <input type="text" id="location" placeholder="예: 본교 2층 과학실">
 
-    <label for="target">대상</label>
-    <input type="text" id="target" placeholder="예: 관내 초·중등 교원">
+        <label for="target">대상</label>
+        <input type="text" id="target" placeholder="예: 관내 초·중등 교원">
 
-    <label for="application">신청 방법</label>
-    <input type="text" id="application" placeholder="예: 구글폼 또는 안내문 참고">
+        <label for="application">신청 방법</label>
+        <input type="text" id="application" placeholder="예: 구글폼 또는 안내문 참고">
 
-    <label for="contact">문의처 (선택)</label>
-    <input type="text" id="contact" placeholder="예: 행정실(02-1234-5678)">
+        <label for="contact">문의처 (선택)</label>
+        <input type="text" id="contact" placeholder="예: 행정실(02-1234-5678)">
 
-    <label for="attachments">붙임파일명</label>
-    <input type="text" id="attachments" placeholder="예: 교원 연수 안내문 1부">
+        <label for="attachments">붙임파일명</label>
+        <input type="text" id="attachments" placeholder="예: 교원 연수 안내문 1부">
 
-    <button onclick="generateDocument()">공문을 생성합니다.</button>
+        <button onclick="generateDocument()">공문을 생성합니다.</button>
+        <div id="result"></div>
+    </div>
 
-    <div id="result"></div>
+    <!-- 생활기록부 생성 폼 -->
+    <div id="saenggiTab" style="display:none">
+        <h1>생활기록부 평가문 생성기</h1>
+        <label for="subject">과목명</label>
+        <input type="text" id="subject" placeholder="예: 영어">
+
+        <label for="area">평가영역</label>
+        <input type="text" id="area" placeholder="예: 듣기">
+
+        <label for="element">평가요소</label>
+        <input type="text" id="element" placeholder="예: 동작을 요청하는 문장을 듣고 상황 이해하기">
+
+        <label for="criterion">성취기준</label>
+        <input type="text" id="criterion" placeholder="예: [4영03-01] 동작을 요청하는 문장을 듣고 의미를 이해하여 상황을 파악할 수 있다.">
+
+        <label for="level">평가등급</label>
+        <select id="level">
+            <option value="잘함">잘함</option>
+            <option value="보통">보통</option>
+            <option value="노력요함">노력요함</option>
+        </select>
+
+        <label for="character">학생 특성</label>
+        <textarea id="character" rows="2" placeholder="예: 적극적이고 책임감이 강함"></textarea>
+
+        <button onclick="generateSaenggi()">생활기록부 생성</button>
+        <div id="saenggiResult"></div>
+    </div>
 
     <script>
+        // 탭 전환 함수
+        function showTab(tab) {
+            // 폼 영역 전환
+            document.getElementById('gongmunTab').style.display = (tab === 'gongmun') ? 'block' : 'none';
+            document.getElementById('saenggiTab').style.display = (tab === 'saenggi') ? 'block' : 'none';
+            // 버튼 강조
+            document.getElementById('gongmunBtn').classList.toggle('active', tab === 'gongmun');
+            document.getElementById('saenggiBtn').classList.toggle('active', tab === 'saenggi');
+        }
+
+        // 공문 생성 함수 (기존)
         async function generateDocument() {
             const event = document.getElementById('event').value;
             const summary = document.getElementById('summary').value;
@@ -70,6 +119,37 @@
                 try {
                     const data = JSON.parse(text);
 
+                    if (data.result) {
+                        resultDiv.textContent = data.result;
+                    } else {
+                        resultDiv.textContent = '❌ 오류: ' + (data.error || '알 수 없는 오류');
+                    }
+                } catch (parseErr) {
+                    resultDiv.textContent = `⚠️ JSON 파싱 실패. 서버 응답: \n${text}`;
+                }
+            } catch (err) {
+                resultDiv.textContent = '❌ 요청 실패: ' + err.message;
+            }
+        }
+
+        // 생활기록부 생성 함수
+        async function generateSaenggi() {
+            const subject = document.getElementById('subject').value;
+            const area = document.getElementById('area').value;
+            const element = document.getElementById('element').value;
+            const criterion = document.getElementById('criterion').value;
+            const level = document.getElementById('level').value;
+            const character = document.getElementById('character').value;
+            const resultDiv = document.getElementById('saenggiResult');
+            try {
+                const response = await fetch('/generate_saenggi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, area, element, criterion, level, character })
+                });
+                const text = await response.text();
+                try {
+                    const data = JSON.parse(text);
                     if (data.result) {
                         resultDiv.textContent = data.result;
                     } else {
