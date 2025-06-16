@@ -43,7 +43,7 @@ def build_vector_db(model, documents):
         pickle.dump(documents, f)
     faiss.write_index(index, str(INDEX_FILE))
 
-def retrieve_similar_docs(model, query, top_k=1):
+def retrieve_similar_docs(model, query, top_k=3):
     if not INDEX_FILE.exists() or not DOC_EMBED_FILE.exists():
         # 인덱스가 없으면 생성
         documents = load_documents()
@@ -58,7 +58,7 @@ def retrieve_similar_docs(model, query, top_k=1):
     D, I = index.search(query_vec, top_k)
     return [documents[i][1] for i in I[0] if i < len(documents)]
 
-# 대표 공문 포맷 + RAG 예시(최대 1개, 400자 이내)
+# 공문 프롬프트 템플릿
 EXAMPLE_PROMPT = """
 제목: {event}
 
@@ -75,15 +75,29 @@ EXAMPLE_PROMPT = """
   마. 문의처: {contact}
 
 붙임: {attachments} 1부. 끝.
-
-[참고 예시]
-{example}
-
-※ 참고 예시 내용을 반드시 반영하여, 위와 동일한 서식(가. 나. 다.)으로 공문을 작성하세요.
 """
+# 아래 참고 예시 내용을 반드시 참고하여, 위와 동일한 서식(가. 나. 다.)으로 공문을 작성하세요.
+# [참고 예시]
+# {example}
+# """
 
 def build_prompt(user_input, examples):
-    # 예시 중 첫 1개만, 400자 이내로 잘라서 사용
+    # 예시 중 첫 1개만 아주 짧게 (길면 자르기)
+    EXAMPLE_DOC = """
+────────────────────────────
+제목: 2025학년도 교원 연수 안내
+
+1. 관련: ○○교육청-2025(2025.6.15.)
+2. 2025학년도 하계 교원 연수 운영과 관련하여 아래와 같이 연수를 실시하오니, 협조 부탁드립니다.
+   가. 연수명: 2025학년도 하계 연수
+   나. 대상: 관내 교원
+   다. 기간: 2025.7.20.~2025.7.22.
+   라. 장소: ○○연수원
+   마. 신청 방법: 붙임 참조
+
+붙임: 교원 연수 안내문 1부.  끝.
+────────────────────────────
+"""
     example_text = (examples[0][:400]) if examples else ""
     return EXAMPLE_PROMPT.format(
         event=user_input.get("event", ""),
@@ -109,35 +123,36 @@ def generate():
     try:
         print("[DEBUG] /generate called")
         data = request.get_json()
-        # 입력값 세부 항목으로 분리(폼에서 받아야 함)
+        keyword = data.get("keyword", "")
         event = data.get("event", "")
         summary = data.get("summary", "")
-        date = data.get("date", "")
-        time = data.get("time", "")
+        date_ = data.get("date", "")
+        time_ = data.get("time", "")
         location = data.get("location", "")
         target = data.get("target", "")
         application = data.get("application", "")
         contact = data.get("contact", "")
         attachments = data.get("attachments", "")
+        print(f"[DEBUG] 입력값: keyword={keyword}, event={event}, attachments={attachments}")
 
-        # 모든 항목 필수면 체크 (옵션화 가능)
-        if not all([event, summary, date, time, location, target, application, attachments]):
+        # 필수값 체크
+        if not all([event, summary, date_, time_, location, target, application, attachments]):
             print("[ERROR] 입력값 누락")
-            return jsonify({"error": "모든 입력 필드를 입력해 주세요."}), 400
+            return jsonify({"error": "필수 입력값이 누락되었습니다."}), 400
 
         user_input = {
+            "keyword": keyword,
             "event": event,
             "summary": summary,
-            "date": date,
-            "time": time,
+            "date": date_,
+            "time": time_,
             "location": location,
             "target": target,
             "application": application,
             "contact": contact,
-            "attachments": attachments
+            "attachments": attachments,
         }
-        # 검색 쿼리에는 대표 정보만 모아서
-        query = f"{event} {summary} {date} {location} {target} {application}"
+        query = f"{event} {summary} {attachments}"
 
         # PDF 기반 유사 예시 추출
         examples = retrieve_similar_docs(sentence_model, query)
@@ -163,4 +178,47 @@ def generate():
         print("[EXCEPTION]", e)
         return jsonify({"error": str(e)}), 500
 
+# 생활기록부 생성 API
+@app.route("/generate_saenggi", methods=["POST"])
+def generate_saenggi():
+    try:
+        data = request.get_json()
+        subject = data.get("subject")
+        area = data.get("area")
+        element = data.get("element")
+        criterion = data.get("criterion")
+        level = data.get("level")
+        character = data.get("character")
 
+        if not all([subject, area, element, criterion, level, character]):
+            return jsonify({"error": "모든 필드를 입력해주세요."}), 400
+
+        # 프롬프트 구성
+        prompt = f"""
+다음 정보를 바탕으로 학생 생활기록부용 한두 문장 평가를 작성해줘.
+- 과목명: {subject}
+- 평가영역: {area}
+- 평가요소: {element}
+- 성취기준: {criterion}
+- 평가등급: {level}
+- 학생 특성: {character}
+
+예시는 불필요하고, 실제 평가처럼 자연스럽게, 단 한두 문장만 생성하고 '-함', '-할 수 있음.'과 같은 말투로 끝맺음해줘.
+        """
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=300
+        )
+        result = response["choices"][0]["message"]["content"].strip()
+        return jsonify({"result": result})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
