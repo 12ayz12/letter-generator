@@ -83,7 +83,7 @@ def generate_saenggi():
 - 평가등급: {level}
 - 학생 특성: {character}
 
-예시는 불필요하고, 실제 평가처럼 자연스럽게, 단 한두 문장만 생성해줘.
+예시는 불필요하고, 실제 평가처럼 자연스럽게, 단 한두 문장만 생성하고 '-함.', '-할 수 있음.'으로 끝맺어줘.
         """
 
         response = openai.ChatCompletion.create(
