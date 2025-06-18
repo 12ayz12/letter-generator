@@ -83,7 +83,7 @@ def generate_saenggi():
 - 평가등급: {level}
 - 학생 특성: {character}
 
-예시는 불필요하고, 실제 평가처럼 자연스럽게, 단 한두 문장만 생성해줘. '-ㅁ'체로 끝맺어야돼.
+예시는 불필요하고, 실제 평가처럼 자연스럽게, 두 문장으로 생성해줘.
         """
 
         response = openai.ChatCompletion.create(
