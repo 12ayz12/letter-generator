@@ -58,16 +58,16 @@
     <div id="saenggiTab" style="display:none">
         <h1>생활기록부 평가문 생성기</h1>
         <label for="subject">과목명</label>
-        <input type="text" id="subject" placeholder="예: 영어">
+        <input type="text" id="subject" placeholder="예: 과학">
 
         <label for="area">평가영역</label>
-        <input type="text" id="area" placeholder="예: 듣기">
+        <input type="text" id="area" placeholder="예: 과학 지식(지식, 이해)">
 
         <label for="element">평가요소</label>
-        <input type="text" id="element" placeholder="예: 동작을 요청하는 문장을 듣고 상황 이해하기">
+        <input type="text" id="element" placeholder="예: 기체 발생 장치를 꾸며 산소를 발생시키고 산소의 성질 확인하기">
 
         <label for="criterion">성취기준</label>
-        <input type="text" id="criterion" placeholder="예: [4영03-01] 동작을 요청하는 문장을 듣고 의미를 이해하여 상황을 파악할 수 있다.">
+        <input type="text" id="criterion" placeholder="예: [6과10-01] 산소, 이산화 탄소를 실험을 통해 발생시키고 성질을 확인한 후, 각 기체의 성질을 설명할 수 있다.">
 
         <label for="level">평가등급</label>
         <select id="level">
@@ -77,7 +77,7 @@
         </select>
 
         <label for="character">학생 특성</label>
-        <textarea id="character" rows="2" placeholder="예: 적극적이고 책임감이 강함"></textarea>
+        <textarea id="character" rows="2" placeholder="예: 수업 태도가 적극적이고 책임감이 강함"></textarea>
 
         <button onclick="generateSaenggi()">생활기록부 생성</button>
         <div id="saenggiResult"></div>
