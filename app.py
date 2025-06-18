@@ -75,7 +75,7 @@ def generate_saenggi():
             return jsonify({"error": "모든 필드를 입력해주세요."}), 400
 
         prompt = f"""
-다음 정보를 바탕으로 학생 생활기록부용 한두 문장 평가를 작성해줘.
+다음 정보를 바탕으로 학생 생활기록부용 두 문장짜리 평가를 작성해줘.
 - 과목명: {subject}
 - 평가영역: {area}
 - 평가요소: {element}
